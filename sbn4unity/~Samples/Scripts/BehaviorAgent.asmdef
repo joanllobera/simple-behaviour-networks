@@ -1,0 +1,16 @@
+{
+    "name": "BehaviorAgent",
+    "rootNamespace": "",
+    "references": [
+        "GUID:740839ec00f160b4c9ee3089edb2929b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

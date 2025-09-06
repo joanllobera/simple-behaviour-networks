@@ -1,0 +1,1351 @@
+using UnityEngine;
+using UnityEditor;
+
+using System.Collections;
+using System.Collections.Generic;
+
+
+/*!
+
+ \brief The window to edit the Personality class
+ \date July 2014
+ 
+
+\todo make sure the activation changes how the goals are rendered
+\todo clicking on any element should trigger the appropriate inspector (it happens already when we expand a perception callback)
+
+ \sa  TPPersonality
+*/
+namespace timepath4unity
+{
+
+    //[CustomEditor(typeof(TPPersonality))]
+    public class TPPersonalityWindow : EditorWindow
+    {
+
+        #region variables
+        public Vector2 scrollPosition = Vector2.zero;
+
+        TPPersonality ebn = null;
+        public static GameObject timepathprefab = null;
+
+
+        float windowWidth = 0.0f;
+
+        static int ypos = 45;//where stuff starts
+        static public int sepx = TPEditorTools.sepx;
+        static public int sepy = TPEditorTools.sepy;
+        static public Vector2 psize = TPEditorTools.psize;
+        static public Vector2 gsize = TPEditorTools.gsize;
+        static public Vector2 ssize = TPEditorTools.ssize;
+
+        //simple toggles
+        bool showResources = false;
+        bool showSkills = false;
+
+        //important: do we need to rebuild what is displayed?
+        bool rebuildSkillsAndGoals = false;
+        bool rebuildPerceptionBoxes = false;
+
+
+        public void rebuildAllCurves() { rebuildSkillsAndGoals = true; }
+
+
+
+
+        static private List<DraggableColumn> columns = new List<DraggableColumn>();
+        static public List<DraggableColumn> Columns { get { return columns; } }
+
+
+
+
+
+
+        public class colposstruct
+        {
+
+            public float offset = 30.0f;
+
+            public float GoalCond;
+            public float GoalWhen;
+            public float SkillWhen;
+            public float SkillEffect;
+            public float PerList;
+            public float ResList;
+
+
+
+        }
+        [SerializeField]
+        colposstruct colpos = new colposstruct();
+
+
+
+
+        [SerializeField]
+        public static List<TPPerceptionBox> SkillWhenPerBoxes = new List<TPPerceptionBox>(); //the precondition perception rectangles.
+
+        [SerializeField]
+        public static List<TPPerceptionBox> SkillEffectPerBoxes = new List<TPPerceptionBox>(); //the effect perception rectangles (also used for goal conditions)
+        public static List<TPPerceptionBox> GoalWhenPerBoxes = new List<TPPerceptionBox>(); //the relevance condition perception rectangles.
+        public static List<TPPerceptionBox> GoalCondPerBoxes = new List<TPPerceptionBox>();
+
+        [SerializeField]
+        private List<TPSkillBox> sBoxes = new List<TPSkillBox>();
+
+        [SerializeField]
+        private List<TPGoalBox> gBoxes = new List<TPGoalBox>();
+
+
+
+        public static List<TPResourceBox> rBoxes = new List<TPResourceBox>();//ressources
+
+
+
+
+        public class AllNodes
+        {
+            public List<TPNode> SkillPerBoxes = new List<TPNode>();
+            public List<TPNode> GoalPerBoxes = new List<TPNode>();
+            public List<TPNode> SkillBoxes = new List<TPNode>();
+            public List<TPNode> GoalBoxes = new List<TPNode>();
+            public List<TPNode> ResBoxes = new List<TPNode>();
+            List<TPNode> allnodes = new List<TPNode>();
+
+            public List<TPNode> getAllNodes()
+            {
+                allnodes.Clear();
+                allnodes.AddRange(SkillPerBoxes);
+                allnodes.AddRange(GoalPerBoxes);
+                allnodes.AddRange(SkillBoxes);
+                allnodes.AddRange(GoalBoxes);
+                allnodes.AddRange(ResBoxes);
+                return allnodes;
+
+            }
+
+        }
+        protected AllNodes nodes = new AllNodes();
+        //private List<TPNode> nodes = new List<TPNode>(); //all the nodes
+
+
+
+
+
+
+        //for drawPerceptions:
+        //int lastdrawheight = 0;
+        private List<bool> showPerceptionCallbacks = new List<bool>();
+
+
+        //to delete perceptions with double clicks:
+        private List<int> delete_step = new List<int>();
+        private List<double> lastclick = new List<double>();
+        //to detect double clicks
+
+
+        //string lastebnname = "";
+
+        [SerializeField]
+        static public List<float> pheights = new List<float>();  //how "LARGE" each particular perception
+        [SerializeField]
+        static public List<float> ppos = new List<float>();  //where is placed each particular perception
+
+        [SerializeField]
+        static public List<float> sheights; //how "LARGE" is that particular skill
+
+        [SerializeField]
+        static public Vector2[] spos = new Vector2[0];
+
+        [SerializeField]
+        static public Vector2[] rpos = new Vector2[0];
+
+        [SerializeField]
+        static public Vector2[] gpos = new Vector2[0];
+
+        //for drawSkillCallbacks:
+        //private List<bool>  showActionCallbacks = new List<bool>() ;
+
+
+
+
+
+        //to select the current transform, we need something like:
+        private Transform edittingTransform = null;
+
+
+        //to draw all the lines and curves we need:
+        TPCurvesAndRules curules;
+
+
+        //to remember which agent we are showing:
+        int AgentListIndex = 0;
+
+        //to remember what animationController we are showing:
+        //int AnimListIndex = 0;
+
+
+        List<string> ls = new List<string>();
+        List<TPAgent> agents = new List<TPAgent>();
+        bool need2resetAgents = true;
+        #endregion
+
+
+
+
+
+
+     
+        [MenuItem("Window/Timepath %t")]
+        static void Init()
+        {
+            // Get existing open window or if none, make a new one:
+            TPPersonalityWindow window = (TPPersonalityWindow)EditorWindow.GetWindow(typeof(TPPersonalityWindow));
+            window.autoRepaintOnSceneChange = true;
+            window.minSize = new Vector2(800.0f, 400.0f);
+            window.windowWidth = window.minSize.x;
+            TPPersonalityWindow.Columns.Clear();  //! \todo change this to non-static 
+            window.position = new Rect(10.0f, 500.0f, window.minSize.x, window.minSize.y);
+
+            window.title = "TP Personality EBN";
+
+
+
+
+        }
+
+
+
+
+        private void OnEnable()
+        {
+
+
+
+            EditorApplication.update += TPPersonalityWindowUpdate;
+            TPEditorTools.InitStyles();
+
+            curules = TPCurvesAndRules.CreateInstance<TPCurvesAndRules>();
+            curules.personalityUpdate(ebn, this);
+
+        }
+
+        public void Update()
+        {
+            Repaint();
+        }
+
+
+        #region functions to draw ebn components
+
+
+
+        private void updateColPos()
+        {
+
+            if (columns.Count <= 0)
+            {
+                colpos.ResList = Screen.width * 0.90f;
+                DraggableColumn d = DraggableColumn.CreateInstance<DraggableColumn>();
+                d.init(" Resources ", new Vector2(colpos.ResList, ypos / 2), ColumnKind.ResList);
+
+                columns.Insert(ColumnKind.ResList, d);
+
+
+                colpos.PerList = Screen.width * 0.75f;
+                d = DraggableColumn.CreateInstance<DraggableColumn>();
+                d.init(" Perceptions ", new Vector2(colpos.PerList, ypos / 2), ColumnKind.PerList);
+                columns.Insert(ColumnKind.PerList, d);
+
+
+                colpos.SkillEffect = colpos.PerList - 4 * psize.x;
+                d = DraggableColumn.CreateInstance<DraggableColumn>();
+                d.init(" Effects  ", new Vector2(colpos.SkillEffect, ypos / 2), ColumnKind.SkillEffect);
+                columns.Insert(ColumnKind.SkillEffect, d);
+
+
+                colpos.SkillWhen = Screen.width * 0.4f;
+                d = DraggableColumn.CreateInstance<DraggableColumn>();
+                d.init(" When-->  ", new Vector2(colpos.SkillWhen, ypos / 2), ColumnKind.SkillWhen);
+                columns.Insert(ColumnKind.SkillWhen, d);
+
+                colpos.GoalWhen = colpos.SkillWhen - 4 * psize.x;
+                d = DraggableColumn.CreateInstance<DraggableColumn>();
+                d.init(" <--When ", new Vector2(colpos.GoalWhen, ypos / 2), ColumnKind.GoalWhen);
+                columns.Insert(ColumnKind.GoalWhen, d);
+
+
+                colpos.GoalCond = Screen.width * 0.1f;
+                d = DraggableColumn.CreateInstance<DraggableColumn>();
+                d.init(" I want to ", new Vector2(colpos.GoalCond, ypos / 2), ColumnKind.GoalCond);
+                columns.Insert(ColumnKind.GoalCond, d);
+
+
+
+            }
+            else
+            {
+                if (Screen.width != windowWidth)
+                {// we are resizing
+
+                    if (Event.current.type == EventType.Layout)
+                    {
+                        foreach (DraggableColumn col in columns)
+                        {
+                            col.setPosition(new Vector2(col.Position.x * Screen.width / windowWidth, col.Position.y));
+                        }
+                    }
+                    windowWidth = Screen.width;
+                }
+
+                //we might be dragging, so:
+
+                //1.we check key changes in position:
+                if (!rebuildPerceptionBoxes)
+                {
+
+                    float temp = Mathf.Sign(columns[ColumnKind.GoalCond].Position[0] - columns[ColumnKind.GoalWhen].Position[0]);
+                    bool a = (temp != Mathf.Sign(colpos.GoalCond - colpos.GoalWhen));
+                    if (a)
+                    {
+                        if (temp < 0)
+                            columns[ColumnKind.GoalWhen].name = " <--When ";
+                        else
+                            columns[ColumnKind.GoalWhen].name = " When--> ";
+                    }
+                    temp = Mathf.Sign(columns[ColumnKind.SkillEffect].Position[0] - columns[ColumnKind.SkillWhen].Position[0]);
+                    bool b = (temp != Mathf.Sign(colpos.SkillEffect - colpos.SkillWhen));
+                    if (b)
+                    {
+                        if (temp < 0)
+                            columns[ColumnKind.SkillWhen].name = " <--When ";
+                        else
+                            columns[ColumnKind.SkillWhen].name = " When--> ";
+                    }
+                    rebuildPerceptionBoxes = a || b;
+                }
+
+
+                //2. we update the positions:
+                colpos.ResList = columns[ColumnKind.ResList].Position[0];
+                colpos.PerList = columns[ColumnKind.PerList].Position[0];
+                colpos.SkillEffect = columns[ColumnKind.SkillEffect].Position[0];
+                colpos.SkillWhen = columns[ColumnKind.SkillWhen].Position[0];
+                colpos.GoalWhen = columns[ColumnKind.GoalWhen].Position[0];
+                colpos.GoalCond = columns[ColumnKind.GoalCond].Position[0];
+
+
+            }
+
+
+
+        }
+
+
+
+        private void updateHeights()
+        {
+            if (pheights.Count != ebn.Perceptions.Length)
+                pheights = new List<float>(new float[ebn.Perceptions.Length]);
+
+            //we check about our foldout numbers 
+            if (ebn.Perceptions.Length != showPerceptionCallbacks.Count)
+            {
+                showPerceptionCallbacks.Clear();
+                foreach (TPPerceptionBase p in ebn.Perceptions)
+                {
+                    showPerceptionCallbacks.Add(false);
+                }
+            }
+
+
+            int i = 0;
+            foreach (TPPerceptionBase p in ebn.Perceptions)
+            {
+
+                if (showPerceptionCallbacks[i])
+                {
+                    //if(!p.customCallback){
+                    pheights[i] = 6 * sepy;	//the space added to the perception to place fields
+                    //! \todo find a way to do this resize depending on number of fields (it is a problem with usig BeginArea for individual perceptions)
+                    //}else{
+                    pheights[i] = 3 * sepy;
+                    //}
+                }
+                else
+                {
+                    pheights[i] = 2f * sepy;	//separation between perception lines
+                }
+
+                //we integrate the additional height eventually needed due to the action callback (see drawActionCallback):
+                if (sheights != null && sheights.Count > i)
+                {
+                    if (pheights[i] < sheights[i])
+                    {
+                        pheights[i] = sheights[i] + sepy;
+                    }
+                }
+                i++;
+            }
+
+
+
+
+
+
+
+
+
+        }
+
+
+        void checkDoubleClick(int pernum, Rect r)
+        {
+            //if we have a double click it means: delete me!!
+
+
+
+
+
+            if (Event.current.type == EventType.MouseDown && r.Contains(Event.current.mousePosition))
+            {
+                if (delete_step[pernum] == 0)
+                    delete_step[pernum] = 1;
+            }
+            else if (Event.current.type == EventType.MouseUp && r.Contains(Event.current.mousePosition))
+            {
+                if (delete_step[pernum] == 1)
+                {
+                    if (EditorApplication.timeSinceStartup - lastclick[pernum] < 0.3f)
+                    { //it is a double click
+                        delete_step[pernum] = 2;
+                    }
+                    else
+                    {
+                        delete_step[pernum] = 0;
+                    }
+                    lastclick[pernum] = EditorApplication.timeSinceStartup;
+
+                }
+            }
+        }
+
+
+        void checkPerceptionsDeleted()
+        {
+            //we check whether some perception was removed (for ex., because we deleted the associated gameObject in the hierarchy)
+            //ebn.Perceptions.Remove(null);
+
+            //we check about the amount of double click checkers
+            if (ebn.Perceptions.Length != lastclick.Count)
+            {
+                lastclick.Clear();
+                delete_step.Clear();
+                foreach (TPPerceptionBase p in ebn.Perceptions)
+                {
+                    lastclick.Add(0.0);
+                    delete_step.Add(0);
+                }
+            }
+
+            TPPerception toRemove = null;
+
+            //we check whether we need to remove some perception because of a double click:
+            for (int i = 0; i < ebn.Perceptions.Length; i++)
+            {
+                if (delete_step[i] == 2)
+                {
+                    delete_step[i] = 0;
+                    toRemove =(TPPerception) ebn.Perceptions[i];
+                }
+            }
+
+
+
+            //we check whether we need to remove some perception (because we deleted it in the pBoxes from the GUI)
+
+            foreach (TPPerceptionBox p in SkillWhenPerBoxes)
+            {
+                if (p.DestroyMe)
+                    toRemove = (TPPerception) p.p;
+            }
+            foreach (TPPerceptionBox p in SkillEffectPerBoxes)
+            {
+                if (p.DestroyMe)
+                    toRemove = (TPPerception) p.p;
+            }
+            foreach (TPPerceptionBox p in GoalWhenPerBoxes)
+            {
+                if (p.DestroyMe)
+                    toRemove = (TPPerception) p.p;
+            }
+            foreach (TPPerceptionBox p in GoalCondPerBoxes)
+            {
+                if (p.DestroyMe)
+                    toRemove = (TPPerception) p.p;
+            }
+
+            if (toRemove != null)
+            {
+                TPPerceptionBox pB = SkillWhenPerBoxes.Find(pBox => pBox.p.Equals(toRemove));
+                if (pB.right != null)
+                    nodes.SkillPerBoxes.Remove(pB.right);
+                if (pB.left != null)
+                    nodes.SkillPerBoxes.Remove(pB.left);
+                pB = SkillEffectPerBoxes.Find(pBox => pBox.p.Equals(toRemove));
+                if (pB.right != null)
+                    nodes.SkillPerBoxes.Remove(pB.right);
+                if (pB.left != null)
+                    nodes.SkillPerBoxes.Remove(pB.left);
+                pB = GoalCondPerBoxes.Find(pBox => pBox.p.Equals(toRemove));
+                if (pB.right != null)
+                    nodes.GoalPerBoxes.Remove(pB.right);
+                if (pB.left != null)
+                    nodes.GoalPerBoxes.Remove(pB.left);
+                pB = GoalWhenPerBoxes.Find(pBox => pBox.p.Equals(toRemove));
+                if (pB.right != null)
+                    nodes.GoalPerBoxes.Remove(pB.right);
+                if (pB.left != null)
+                    nodes.GoalPerBoxes.Remove(pB.left);
+
+
+                TPCallbackTools.removePerception(ebn, toRemove);
+                if (toRemove != null)
+                    GameObject.DestroyImmediate(toRemove.gameObject);
+
+                rebuildSkillsAndGoals = true;
+            }
+
+        }
+
+
+        private void drawPerceptions()
+        {
+
+            if (ppos.Count != ebn.Perceptions.Length)
+            {
+                ppos = new List<float>(new float[ebn.Perceptions.Length]);
+            }
+            checkPerceptionsDeleted();
+
+            //if a perception was added or removed, we also need to:
+            if ((SkillWhenPerBoxes.Count != ebn.Perceptions.Length) || rebuildPerceptionBoxes || rebuildSkillsAndGoals)
+            {
+                rebuildSkillPerBoxes();
+                rebuildGoalPerBoxes();
+            }
+
+            //we first draw the callbacks part, which gives us the height of each perception.
+            //if(lastdrawheight == 0){
+            int lastdrawheight = 60 * ebn.Perceptions.Length;
+            int i = 0;
+
+
+            //we find the distance to the next column:
+            float distance = Screen.width;
+            foreach (DraggableColumn col in columns)
+            {
+                float temp = col.Position.x - colpos.PerList;
+                if (temp > 0 && temp < distance)
+                    distance = temp;
+            }
+
+
+            lastdrawheight = 0;
+            if (ppos.Count > 0)
+                ppos[0] = ypos;
+
+            foreach (TPPerceptionBase p in ebn.Perceptions)
+            {
+                Rect pArea = new Rect(colpos.PerList, ypos + lastdrawheight, distance, pheights[i]);
+                checkDoubleClick(i, pArea);
+
+
+                GUILayout.BeginArea(pArea);
+
+                //we make sure the last foldout opened corresponds to the object selected in the hierarchy:
+                bool lastFoldoutOpened = EditorGUILayout.Foldout(showPerceptionCallbacks[i], p.name);
+
+
+                if (!showPerceptionCallbacks[i] && lastFoldoutOpened)
+                {
+                    //if it just opened, we select the gameObject in the hierarchy (needed for EditorDelegateGUI.EventFields)	
+                    Selection.activeGameObject = p.gameObject;
+                    //EditorGUIUtility.PingObject( p.gameObject );
+
+                }
+                else if (showPerceptionCallbacks[i] && lastFoldoutOpened)
+                {
+                    //it was already open, but we have selected another object (to avoid a blocking situation)
+                    if (Selection.activeGameObject != p.gameObject)
+                    {
+                        lastFoldoutOpened = EditorGUILayout.Foldout(false, p.name);
+                    }
+                }
+                else if (!showPerceptionCallbacks[i] && Selection.activeGameObject == p.gameObject)
+                {
+                    //! \todo put a method to highlight the name, like the PingObject function
+                }
+                showPerceptionCallbacks[i] = lastFoldoutOpened;
+                EditorGUILayout.BeginHorizontal(GUILayout.Width(distance));
+                EditorGUILayout.BeginVertical();
+                if (showPerceptionCallbacks[i])
+                {
+                    //if(!p.customCallback){
+
+                    //	EditorDelegateGUI.EventFields(p as Component);
+                    if (GUI.changed)
+                    {
+                        EditorUtility.SetDirty(p);
+                    }
+                    //}
+                    //p.customCallback = GUILayout.Toggle(p.customCallback,"Defined in code");
+                    p.name = EditorGUILayout.TextField(p.name, GUILayout.MaxWidth(pArea.width));
+
+                }
+
+
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.EndHorizontal();
+
+
+                GUILayout.EndArea();
+
+                lastdrawheight += (int)pheights[i];
+
+                i++;
+                if (i < ebn.Perceptions.Length)
+                    ppos[i] = ypos + lastdrawheight;
+            }
+            if (showSkills)
+            {
+                foreach (TPPerceptionBox p in SkillWhenPerBoxes)
+                {
+                    p.drawActivation();
+                    p.draw();
+                }
+                foreach (TPPerceptionBox p in SkillEffectPerBoxes)
+                {
+                    p.draw();
+                }
+            }
+            foreach (TPPerceptionBox p in GoalWhenPerBoxes)
+            {
+                p.drawActivation();
+                p.draw();
+            }
+            foreach (TPPerceptionBox p in GoalCondPerBoxes)
+            {
+                p.draw();
+                //p.drawName();
+            }
+
+        }
+
+
+        private void drawResources()
+        {
+            if ((ebn.Resources.Length != rBoxes.Count) || rebuildPerceptionBoxes)
+            {
+
+                rBoxes.Clear();
+                nodes.ResBoxes.Clear();
+                rpos = new Vector2[ebn.Resources.Length];
+
+
+
+                int i = 0;
+                float ypos2 = ypos * 1.5f;	//we put it slightly lower
+                foreach (TPResource r in ebn.Resources)
+                {
+                    rpos[i] = new Vector2(colpos.ResList, ypos2);
+                    TPResourceBox rB = new TPResourceBox(r, i);
+                    rBoxes.Add(rB);
+                    nodes.ResBoxes.AddRange(rB.getNodes());
+                    i++;
+                    ypos2 = ypos2 + (int)psize.y + sepy;
+                }
+            }
+            else
+            {
+                foreach (TPResourceBox r in rBoxes)
+                {
+                    r.draw();
+                }
+                foreach (TPResourceBox r in rBoxes)
+                {
+                    if (r.DestroyMe)
+                    {
+                        ebn.removeResource(r.res);
+                        rebuildSkillsAndGoals = true;
+                    }
+                }
+
+                foreach (TPSkillBox s in sBoxes)
+                {
+                    s.drawResourceLinks();
+                }
+
+            }
+
+        }
+
+        //! \todo draw better compared to the most important perceptions (something like a sortGoals from gCon)
+        private void drawGoals()
+        {
+
+
+            int i = 0;
+
+            float start = colpos.GoalCond + psize.x + sepx;
+            float end = colpos.GoalWhen - gsize.x - sepx;
+            float xpos = start + (end - start) * 0.5f;
+            gpos = new Vector2[ebn.Goals.Length];
+            float ypos2 = ypos;
+
+
+            foreach (TPGoalBox g in gBoxes)
+            {
+
+                //in order the position represents the relevance:
+                if (EditorApplication.isPlayingOrWillChangePlaymode)
+                {
+                    xpos = start + (end - start) * (float)g.getRelevance();
+                }
+
+                if (i < ebn.Perceptions.Length)
+                {
+                    //where should the goal be drawn (relative to the perceptions):
+                    float yposgoal;
+                    if (showPerceptionCallbacks[i])
+                        yposgoal = (psize.y + pheights[i] - gsize.y) / 2;
+                    else
+                        yposgoal = psize.y + sepy / 2 - gsize.y / 2;
+
+                    gpos[i] = new Vector2(xpos, ypos2 + yposgoal - gsize.y / 2);//! 
+                    ypos2 = ypos2 + pheights[i];
+                }
+                else
+                {
+                    gpos[i] = new Vector2(xpos, ypos2 + sepy - gsize.y / 2);//! \todo recheck this part HERE HERE
+                    ypos2 = ypos2 + psize.y + sepy;
+
+                }
+                i++;
+
+            }
+            //should we remove some goal in the personality?
+            foreach (TPGoalBox g in gBoxes)
+            {
+                if (g.DestroyMe || g.g == null)
+                { //we have pressed the remove button or the Action gameObject has been destroyed
+                    nodes.GoalBoxes.Remove(g.left);
+                    nodes.GoalBoxes.Remove(g.right);
+                    ebn.removeGoal(g.g);
+                }
+            }
+
+
+            //should we update the boxes because the number of goals has changed?
+            if (gBoxes.Count != ebn.Goals.Length || rebuildPerceptionBoxes)
+                rebuildSkillsAndGoals = true;
+            else
+            {
+                foreach (TPGoalBox g in gBoxes)
+                {
+                    g.draw();
+                }
+            }
+
+
+
+        }
+
+
+
+        public void rebuildSkillPerBoxes()
+        {
+            int i = 0;
+            SkillWhenPerBoxes.Clear();
+            SkillEffectPerBoxes.Clear();
+
+            nodes.SkillPerBoxes.Clear();
+
+            foreach (TPPerceptionBase p in ebn.Perceptions)
+            {
+                TPPerceptionBox pB = new TPPerceptionBox(p, i, Columns[ColumnKind.SkillWhen]);
+                SkillWhenPerBoxes.Add(pB);
+
+                nodes.SkillPerBoxes.AddRange(pB.getNodes());
+
+                TPPerceptionBox pB2 = new TPPerceptionBox(p, i, Columns[ColumnKind.SkillEffect]);
+                SkillEffectPerBoxes.Add(pB2);
+
+                nodes.SkillPerBoxes.AddRange(pB2.getNodes());
+
+                i++;
+            }
+
+        }
+
+        public void rebuildGoalPerBoxes()
+        {
+            int i = 0;
+            GoalWhenPerBoxes.Clear();
+            GoalCondPerBoxes.Clear();
+            nodes.GoalPerBoxes.Clear();
+            foreach (TPPerceptionBase p in ebn.Perceptions)
+            {
+                TPPerceptionBox pB = new TPPerceptionBox(p, i, Columns[ColumnKind.GoalWhen]);
+                GoalWhenPerBoxes.Add(pB);
+
+                nodes.GoalPerBoxes.AddRange(pB.getNodes());
+
+                TPPerceptionBox pB2 = new TPPerceptionBox(p, i, Columns[ColumnKind.GoalCond]);
+                GoalCondPerBoxes.Add(pB2);
+                nodes.GoalPerBoxes.AddRange(pB2.getNodes());
+                i++;
+            }
+        }
+
+        public void rebuildGoalBoxes()
+        {
+
+            int i = 0;
+
+            gBoxes.Clear();
+            nodes.GoalBoxes.Clear();
+
+            if (gpos.Length != ebn.Goals.Length)
+                gpos = new Vector2[ebn.Goals.Length];
+            foreach (TPGoal g in ebn.Goals)
+            {
+
+                TPGoalBox gB = new TPGoalBox(g, i);
+                gBoxes.Add(gB);
+                nodes.GoalBoxes.AddRange(gB.getNodes());
+                i++;
+
+            }
+
+
+        }
+
+        public void rebuildSkillBoxes()
+        {
+
+
+            int i = 0;
+
+            sBoxes.Clear();
+            nodes.SkillBoxes.Clear();
+
+            if (spos.Length != ebn.Skills.Length)
+                spos = new Vector2[ebn.Skills.Length];
+            foreach (TPSkill s in ebn.Skills)
+            {
+
+                TPSkillBox sB = new TPSkillBox(s, i);
+                sBoxes.Add(sB);
+                nodes.SkillBoxes.AddRange(sB.getNodes());
+                i++;
+
+            }
+
+
+        }
+
+        //! todo : draw better compared to the most important perceptions (something like a sortSkills from eff. )
+        private void drawSkills()
+        {
+
+            float maxa = 1.0f;
+
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                maxa = ebn.checkActivationRange();
+
+            if (sheights == null || sheights.Count != ebn.Skills.Length)
+                sheights = new List<float>(new float[ebn.Skills.Length]);
+            //we check about our foldouts:
+            int i = 0;
+            float start = colpos.SkillWhen + psize.x + sepx;
+            float end = colpos.SkillEffect - ssize.x - sepx;
+            float ypos2 = ypos;
+            spos = new Vector2[ebn.Skills.Length];
+            foreach (TPSkill s in ebn.Skills)
+            {
+                //the more to the right, the more active is the skill:
+                float xpos = start + (end - start) / 2;
+                if (EditorApplication.isPlayingOrWillChangePlaymode)
+                    if (maxa <= 0)
+                    {
+                        xpos = start;
+                    }
+                    else
+                    {
+                        xpos = start + (end - start) * ((float)s.Action.A) / maxa;
+                    }
+
+                if (i < ebn.Perceptions.Length)
+                {
+                    spos[i] = new Vector2(xpos, ppos[i] + psize.y - ssize.y / 2);
+                    ypos2 = ypos2 + pheights[i];
+
+                }
+                else
+                {
+                    spos[i] = new Vector2(xpos, ypos2);
+                    ypos2 = ypos2 + sheights[i] + psize.y - ssize.y / 2;
+                }
+                i++;
+            }
+
+
+            //should we remove some skill in the personality?
+            foreach (TPSkillBox s in sBoxes)
+            {
+                if (s.s == null || s.DestroyMe || s.s.Action == null)
+                { //we have pressed the remove button or the Action gameObject has been destroyed
+                    nodes.SkillBoxes.Remove(s.left);
+                    nodes.SkillBoxes.Remove(s.right);
+                    TPCallbackTools.removeSkill( s.s);
+                }
+            }
+
+            //should we update the boxes because the number of skills has changed?
+            if (sBoxes.Count != ebn.Skills.Length || rebuildPerceptionBoxes)
+            {
+                rebuildSkillsAndGoals = true;
+            }
+            else
+            {
+                foreach (TPSkillBox s in sBoxes)
+                {
+                    if (s.s)
+                        s.draw();
+                }
+            }
+
+
+
+        }
+
+
+        private void DrawAddButtons()
+        {
+            float yPosLast = ypos;
+
+
+            if (showSkills)
+            {
+                //the space taken by the skills:
+                if (sheights.Count > 0)
+                {
+                    yPosLast = spos[sheights.Count - 1].y + sheights[sheights.Count - 1] + psize.y - ssize.y / 2 + sepy;
+                }
+            }
+
+            //the space taken by the perceptions:
+            if (ppos.Count > 0)
+            {
+                yPosLast = Mathf.Max(yPosLast, ppos[ppos.Count - 1] + 2 * sepy);
+            }
+
+            //the space taken by the goals:
+            List<Vector2> temp = new List<Vector2>(gpos);
+            if (temp.Count > 0)
+                yPosLast = Mathf.Max(yPosLast, temp[temp.Count - 1].y + gsize.y + sepy);
+
+            if (showResources)
+            {
+                //the space taken by the resources:
+                temp = new List<Vector2>(rpos);
+                if (temp.Count > 0)
+                    yPosLast = Mathf.Max(yPosLast, temp[temp.Count - 1].y + gsize.y + sepy);
+            }
+
+
+
+            if (showSkills)
+            {
+                //button to add a new skill	
+                float xSkill = (TPPersonalityWindow.Columns[ColumnKind.SkillWhen].Position.x + TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x) / 2 + psize.x / 2 - ssize.x / 2;
+                Rect skillArea = new Rect(xSkill, yPosLast, ssize.x, ssize.y);
+                if (GUI.Button(skillArea, " + ", TPEditorTools.ssty))
+                {
+                    scrollPosition = new Vector2(0.0f, yPosLast);
+                    string name = "Skill" + sBoxes.Count;
+                    TPCallbackTools.AddSkillByName(ebn, name);
+                }
+
+            }
+
+            //button to add a new goal	
+
+            float xGoal = (TPPersonalityWindow.Columns[ColumnKind.GoalWhen].Position.x + TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x) / 2 + psize.x / 2 - gsize.x / 2;
+            Rect goalArea = new Rect(xGoal, yPosLast, gsize.x, gsize.y);
+            if (GUI.Button(goalArea, " + ", TPEditorTools.gsty))
+            {
+                scrollPosition = new Vector2(0.0f, yPosLast);
+                ebn.AddGoal();
+            }
+
+
+
+            //buttons to add a new perception
+            float[] xNewPer = new float[0];
+            if (showSkills)
+            {
+                xNewPer = new float[4]{TPPersonalityWindow.Columns[ColumnKind.GoalWhen].Position.x,  TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x,  
+				TPPersonalityWindow.Columns[ColumnKind.SkillWhen].Position.x,  TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x};
+            }
+            else
+            {
+                xNewPer = new float[2] { TPPersonalityWindow.Columns[ColumnKind.GoalWhen].Position.x, TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x };
+            }
+
+
+            foreach (float xPer in xNewPer)
+            {
+
+                Rect prect = new Rect(xPer, yPosLast, psize.x, psize.y);
+                if (GUI.Button(prect, " + ", TPEditorTools.psty))
+                {
+                    scrollPosition = new Vector2(0.0f, yPosLast);
+                    string name = "Perception" + SkillWhenPerBoxes.Count;
+                    TPCallbackTools.AddPerceptionByName(ebn, name);
+                    rebuildSkillsAndGoals = true;
+                }
+
+            }
+
+            //button to add a new resource
+            if (showResources)
+            {
+                Rect rrect = new Rect(TPPersonalityWindow.Columns[ColumnKind.ResList].Position.x, yPosLast, psize.x, psize.y);
+                if (GUI.Button(rrect, " + ", TPEditorTools.rsty))
+                {
+                    scrollPosition = new Vector2(0.0f, yPosLast);
+                    ebn.AddResourceByName("Resource" + TPPersonalityWindow.rBoxes.Count);
+                }
+            }
+
+
+
+        }
+
+
+
+        #endregion
+
+
+
+
+        private void OnGUI()
+        {
+
+            //we load the prefab:
+            if (!timepathprefab)
+            {
+                // Try to grab our prefab.
+                string name = "TimepathPrefab";
+                timepathprefab = Resources.Load(name, typeof(GameObject)) as GameObject;
+                if (!timepathprefab)
+                {
+                    Debug.Log("The prefab " + name + " does not seem to be in the Timepath Resources folder");
+                    return;
+                }
+            }
+
+            //we deal with the columns:
+            updateColPos();
+
+
+            string error = "Select a Personality in the hierarchy or create a new one";
+            if (!ebn)
+                ShowNotification(new GUIContent(error));
+            else
+            {
+                RemoveNotification();
+                if (Columns.Count > 0)
+                {
+                    //! \todo adjust the position of the columns depending on the fact that the skills are shown or not. And, when not drawn, make sure the columns do not "cover" what is being drawn
+
+                    columns[ColumnKind.GoalCond].OnGUI();
+                    columns[ColumnKind.GoalWhen].OnGUI();
+                    columns[ColumnKind.PerList].OnGUI();
+                    if (showSkills)
+                    {
+
+                        columns[ColumnKind.SkillWhen].OnGUI();
+                        columns[ColumnKind.SkillEffect].OnGUI();
+                    }
+                    if (showResources)
+                    {
+                        columns[ColumnKind.ResList].OnGUI();
+                    }
+
+                }
+
+                float vsize = Mathf.Max(ebn.Perceptions.Length * (psize.y + sepy) + ypos, ebn.Resources.Length * (psize.y + sepy) + ypos * 1.5f);
+                scrollPosition = GUI.BeginScrollView(new Rect(0, ypos, Screen.width, 0.7f * Screen.height), scrollPosition, new Rect(0, ypos, 0.9f * Screen.width, vsize), false, false);
+
+                updateHeights();
+                drawPerceptions();
+
+
+
+                if (showResources)
+                    drawResources();
+
+
+                Event evt = Event.current;
+                if (rebuildSkillsAndGoals && evt.type == EventType.Layout)
+                {
+                    rebuildSkillsAndGoals = false;
+                    this.rebuildSkillBoxes();//since we changed the layout of curves, we need to rebuild them
+                    this.rebuildGoalBoxes();
+                }
+
+                drawGoals();	//! \todo PROBLEM: when changing the personality, rebuildGoalBoxes assumes goalpos of the right size. but this is only fixed in drawGoals. To be solved.
+
+
+                if (showSkills)
+                    drawSkills();
+
+                DrawAddButtons();
+
+                curules.checkCurveCandidate(nodes.getAllNodes());
+
+                if (rebuildPerceptionBoxes)
+                    rebuildPerceptionBoxes = false;
+
+
+                GUI.EndScrollView();
+
+
+                showSkills = GUI.Toggle(new Rect(10.0f, 0.8f * Screen.height + ssize.y, ssize.x, ssize.y), showSkills, "edit Skills");
+                if (showSkills)
+                {
+                    bool tempShowRes = GUI.Toggle(new Rect(20.0f, 0.8f * Screen.height + 2 * ssize.y, ssize.x, ssize.y), showResources, "edit Resources");
+                    if (tempShowRes && !showResources)
+                    {
+                        showResources = true;
+                        rebuildSkillsAndGoals = true;
+                    }
+                    else
+                    {
+                        showResources = tempShowRes;
+                    }
+                }
+                else
+                {
+                    showResources = false;
+                }
+
+                Rect rtooltip = new Rect(10.0f + ssize.x + sepx, 0.8f * Screen.height + ssize.y, Screen.width / 4, 4 * ssize.y);
+                GUI.TextArea(rtooltip, GUI.tooltip);
+
+
+
+
+            }
+
+
+            float xend = 0.0f;
+            float yend = 0.0f;
+
+
+            //we write the name of the current personality:
+           
+
+            //TP2508
+            GUIStyle temp = new GUIStyle(EditorStyles.toolbarButton);
+            temp.normal.textColor = TPEditorTools.tsty.normal.textColor;
+            if (ebn)
+            {
+                GUI.Label(new Rect(xend, yend, 160.0f, 20.0f), ebn.name.ToString(), temp);
+                xend += 160f;
+            }
+
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                if (ebn)
+                {
+                    if (this.need2resetAgents == true)
+                    {
+                        agents.Clear();
+                        this.need2resetAgents = false;
+                    }
+                    if (agents.Count == 0)
+                    {
+                        ls.Clear();
+                        agents = TP.getAgentsWithPersonality(ebn);
+                        foreach (TPAgent a in agents)
+                        {
+                            ls.Add(a.name);
+                        }
+                    }
+                    else
+                    {
+                        AgentListIndex = EditorGUI.Popup(new Rect(xend, yend, 160.0f, psize.y * agents.Count), AgentListIndex, ls.ToArray());
+                    }
+                }
+                xend += 160f;
+
+
+
+            }
+            else
+            {//we are not in play mode
+                if (this.need2resetAgents == false)
+                {
+                    ebn = null;
+                    rebuildPerceptionBoxes = true;//rebuilds the perceptionBoxes
+                    rebuildSkillsAndGoals = true;
+                    this.need2resetAgents = true; //removes the Agents listed 
+                }
+
+                yend = Screen.height * 0.8f + ssize.y;
+                xend = Screen.width * 0.4f;
+
+                TPPersonality[] personalities = FindObjectsOfType(typeof(TPPersonality)) as TPPersonality[];
+                int numpersona = personalities.Length + 1;
+
+
+                Rect anotherButton = new Rect(xend, yend, 160.0f, yend + 20.0f);
+                if (GUI.Button(anotherButton, "Create New Personality", EditorStyles.toolbarButton))
+                {
+                    //Undo.RegisterSceneUndo ("Create Empty Personality");
+                    GameObject spawnedPrefab = GameObject.Instantiate(timepathprefab) as GameObject;
+                    spawnedPrefab.name = "personality type" + numpersona.ToString();
+                    Selection.activeTransform = spawnedPrefab.transform;
+                    ebn = spawnedPrefab.AddComponent<TPPersonality>();
+                }
+
+                xend += 160f;
+                /*
+                anotherButton = new Rect (xend, yend, 160.0f, yend + 20.0f);
+                if (GUI.Button (anotherButton, "create perso with perceptions", EditorStyles.toolbarButton)) {
+                        //Undo.RegisterSceneUndo ("Create perso with perceptions");
+                        GameObject spawnedPrefab = GameObject.Instantiate (timepathprefab) as GameObject;
+                        spawnedPrefab.name = "personality type" + numpersona.ToString ();
+                        Selection.activeTransform = spawnedPrefab.transform;
+                        ebn = spawnedPrefab.AddComponent<TPPersonality> ();
+                        TPPersonalityTools.generatePerceptions (ebn);
+			
+                }
+
+                xend += 160f;
+                anotherButton = new Rect (xend, yend, 160.0f, yend + 20.0f);
+                if (GUI.Button (anotherButton, "create basic Personality", EditorStyles.toolbarButton)) {
+                        //Undo.RegisterSceneUndo ("Create basic Personality");
+                        GameObject spawnedPrefab = GameObject.Instantiate (timepathprefab) as GameObject;
+                        spawnedPrefab.name = "personality type" + numpersona.ToString ();
+                        Selection.activeTransform = spawnedPrefab.transform;
+                        ebn = spawnedPrefab.AddComponent<TPPersonality> ();
+                        TPPersonalityTools.generateBasicPersonality (ebn);
+                }*/
+                xend += 160f;
+
+
+                //! \todo we show the animation controllers available. THIS IS BUGGY WHEN CHANGING BETWEEN 2 PERSONALITIES
+
+                /*
+                if(ebn){
+
+                    RuntimeAnimatorController[] animsVector = (RuntimeAnimatorController[]) Resources.FindObjectsOfTypeAll(typeof(RuntimeAnimatorController));
+                    //List<Animator> anims = new List<Animator>(animsVector);
+                    string[] animNames = new string[animsVector.Length+1];
+                    int i=0;
+                    animNames[0] = "   ";
+                    foreach(RuntimeAnimatorController a in animsVector){
+                        animNames[i+1] = a.name;
+                        i++;
+                    }
+
+                    AnimListIndex = EditorGUI.Popup (new Rect (xend, yend, 160.0f, psize.y * animNames.Length), AnimListIndex, animNames);
+                    if(AnimListIndex > 0 && animsVector.Length > 0)
+                        ebn.AnimControl =  animsVector[AnimListIndex-1];
+
+
+                }*/
+
+
+            }
+
+        }
+
+
+
+        private void TPPersonalityWindowUpdate()
+        {
+
+            //to change the object selected through the menu
+            if (EditorApplication.isPlayingOrWillChangePlaymode && (agents.Count > 0) && (ebn != agents[AgentListIndex].MyPerso))
+            {
+
+
+
+
+                ebn = agents[AgentListIndex].MyPerso;
+                Selection.activeTransform = agents[AgentListIndex].transform;
+
+                if (ebn != null)
+                    edittingTransform = ebn.transform;//this should help properly resolve with  the next of WindowUpdate function
+
+
+                rebuildPerceptionBoxes = true;
+                rebuildSkillsAndGoals = true;
+            }
+
+
+
+            // Swap our editting transform
+            if (Selection.activeTransform && Selection.activeTransform.GetComponent<TPPersonality>())
+                edittingTransform = Selection.activeTransform;
+
+            if (!edittingTransform)
+                return;
+
+            if (!edittingTransform.GetComponent<TPPersonality>())
+                return;
+
+            /*
+            TPPersonality nextebn;
+            if(!ebn)
+            {
+                nextebn = edittingTransform.GetComponent<TPPersonality>();
+            }
+            else
+            {
+                TPPersonality temp = edittingTransform.GetComponent<TPPersonality>();
+                nextebn = temp;
+            }*/
+
+
+            TPPersonality nextebn = edittingTransform.GetComponent<TPPersonality>();
+            if (nextebn != ebn)
+            {
+                rebuildPerceptionBoxes = true;
+                rebuildSkillsAndGoals = true;
+
+            }
+
+
+
+            ebn = nextebn;
+            curules.personalityUpdate(ebn, this);
+
+
+        }
+        void OnDisable()
+        {
+
+            windowWidth = 0.0f;
+        }
+
+    }
+
+
+}

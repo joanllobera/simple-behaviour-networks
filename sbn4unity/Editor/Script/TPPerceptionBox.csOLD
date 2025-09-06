@@ -1,0 +1,296 @@
+﻿
+
+using UnityEngine;
+using UnityEditor;
+
+using System.Collections;
+using System.Collections.Generic;
+
+
+
+/*!
+
+ \brief A box used to draw the perceptions in the user interface
+ \date April 2014
+ 
+ 
+ \todo adding a noew perosnality provokes a crash in the index of these boxes
+
+
+ \sa  TPPerception, TPPersonalityWindow
+*/
+
+
+namespace timepath4unity
+{
+    public class TPPerceptionBox
+    {
+
+
+        public TPPerceptionBase p; //the perception
+        protected Rect r; //the square
+        protected DraggableColumn c; //column
+
+        private bool destroyMe = false;
+        double lastclick = 0.0;
+        string helptext = "\n Use the yellow Node to connect it.  \n Double click to delete it. \n Edit it by expanding it in the column 'Perceptions'. ";
+
+        public bool DestroyMe { get { return destroyMe; } }
+
+
+
+       
+        protected int index;
+        public string label;
+
+        public TPNode left = null;
+        public TPNode right = null;
+
+
+        //! do we really need this?
+        public TPPerceptionBox(TPPerceptionBase per, int index, DraggableColumn col)
+        {
+            this.p = per;
+            this.c = col;
+            this.index = index;
+
+            this.r = new Rect(col.Position.x, TPPersonalityWindow.ppos[index], TPEditorTools.psize.x, TPEditorTools.psize.y);
+
+            if (col.ColumnKind == ColumnKind.SkillWhen)
+            {
+                TPNode node = new TPNode(new Rect(this.r.xMax, this.r.yMin + TPEditorTools.nsize.y / 2, TPEditorTools.nsize.x, TPEditorTools.nsize.y), TPNode.nodeType.SkillWhenBox, this);
+                if (TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x > TPPersonalityWindow.Columns[ColumnKind.SkillWhen].Position.x)
+                {
+                    right = node;
+                }
+                else
+                {
+                    left = node;
+                }
+            }
+            else if (col.ColumnKind == ColumnKind.SkillEffect)
+            {
+                TPNode node = new TPNode(new Rect(this.r.xMax, this.r.yMin + TPEditorTools.nsize.y / 2, TPEditorTools.nsize.x, TPEditorTools.nsize.y), TPNode.nodeType.SkillEffectBox, this);
+                if (TPPersonalityWindow.Columns[ColumnKind.SkillWhen].Position.x > TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x)
+                {
+                    right = node;
+                }
+                else
+                {
+                    left = node;
+                }
+            }
+            else if (col.ColumnKind == ColumnKind.GoalWhen)
+            {
+                TPNode node = new TPNode(new Rect(this.r.xMax, this.r.yMin + TPEditorTools.nsize.y / 2, TPEditorTools.nsize.x, TPEditorTools.nsize.y), TPNode.nodeType.GoalWhenBox, this);
+                if (TPPersonalityWindow.Columns[ColumnKind.GoalWhen].Position.x < TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x)
+                {
+                    right = node;
+                }
+                else
+                {
+                    left = node;
+                }
+            }
+            else if (col.ColumnKind == ColumnKind.GoalCond)
+            {
+                TPNode node = new TPNode(new Rect(this.r.xMax, this.r.yMin + TPEditorTools.nsize.y / 2, TPEditorTools.nsize.x, TPEditorTools.nsize.y), TPNode.nodeType.GoalCondBox, this);
+                if (TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x < TPPersonalityWindow.Columns[ColumnKind.GoalWhen].Position.x)
+                {
+                    right = node;
+                }
+                else
+                {
+                    left = node;
+                }
+
+            }
+
+
+        }
+        public List<TPNode> getNodes()
+        {
+            List<TPNode> list = new List<TPNode>();
+            if (left != null)
+                list.Add(left);
+            if (right != null)
+                list.Add(right);
+
+            return list;
+        }
+
+
+        public void draw()
+        {
+            if (this.p == null)
+            { //the gameObject was deleted
+                destroyMe = true;
+            }
+            else
+            {
+                string spval = p.getvalue().ToString("F2");
+                if (p.getvalue() > 0.99)
+                    spval = "1";
+                else
+                    spval = spval.Remove(0, 1);
+                this.label = spval;
+
+                this.r.x = this.c.Position.x;
+                this.r.y = TPPersonalityWindow.ppos[index];
+                //GUI.Label (this.r,this.label,TPPersonalityWindow.psty);
+
+                string t = "Perception '" + this.p.name + "' \n" + helptext;
+                if (GUI.Button(this.r, new GUIContent(this.label, t), TPEditorTools.psty))
+                {
+                    if (EditorApplication.timeSinceStartup - lastclick < 0.3f)
+                    { //it is a double click
+                        destroyMe = true;
+                    }
+                    lastclick = EditorApplication.timeSinceStartup;
+
+                }
+
+                if (left != null)
+                {
+                    this.left.r.x = this.r.xMin - this.left.r.width;
+                    this.left.r.y = this.r.y + this.r.height / 2 - this.left.r.height / 2;
+                    GUI.Label(this.left.r, " ", TPEditorTools.nsty);
+                }
+                if (right != null)
+                {
+                    this.right.r.x = this.r.xMax;
+                    this.right.r.y = this.r.y + this.r.height / 2 - this.right.r.height / 2;
+                    GUI.Label(this.right.r, " ", TPEditorTools.nsty);
+                }
+            }
+        }
+
+
+      
+
+
+
+        public void drawActivation()
+        {
+            if (left != null)
+            {
+                if (c.ColumnKind == ColumnKind.GoalWhen)
+                {
+                    float totallength = (this.r.xMin - (TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x + TPEditorTools.psize.x));
+                    float activLength = totallength * (float)this.p.getvalue();
+                    GUI.DrawTexture(new Rect(TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x + TPEditorTools.psize.x, this.r.yMin, totallength - activLength, TPEditorTools.psize.y), TPEditorTools.psty.active.background);
+                    GUI.DrawTexture(new Rect(TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x + TPEditorTools.psize.x + totallength - activLength, this.r.yMin, activLength, TPEditorTools.psize.y), TPEditorTools.psty.onActive.background);
+                }
+                else if (c.ColumnKind == ColumnKind.SkillWhen)
+                {
+                    float totallength = (this.r.xMin - (TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x + TPEditorTools.psize.x));
+                    float activLength = totallength * (float)this.p.getvalue();
+                    GUI.DrawTexture(new Rect(TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x + TPEditorTools.psize.x, this.r.yMin, totallength - activLength, TPEditorTools.psize.y), TPEditorTools.psty.active.background);
+                    GUI.DrawTexture(new Rect(TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x + TPEditorTools.psize.x + totallength - activLength, this.r.yMin, activLength, TPEditorTools.psize.y), TPEditorTools.psty.onActive.background);
+                }
+            }
+            if (right != null)
+            {
+                if (c.ColumnKind == ColumnKind.GoalWhen)
+                {
+                    float totallength = TPPersonalityWindow.Columns[ColumnKind.GoalCond].Position.x - this.r.xMax;
+                    float activLength = totallength * ((float)this.p.getvalue());
+
+                    GUI.DrawTexture(new Rect(this.r.xMax, this.r.yMin, activLength, TPEditorTools.psize.y), TPEditorTools.psty.onActive.background);
+                    GUI.DrawTexture(new Rect(this.r.xMax + activLength, this.r.yMin, totallength - activLength, TPEditorTools.psize.y), TPEditorTools.psty.active.background);
+
+                }
+                else if (c.ColumnKind == ColumnKind.SkillWhen)
+                {
+                    float totallength = TPPersonalityWindow.Columns[ColumnKind.SkillEffect].Position.x - this.r.xMax;
+                    float activLength = totallength * ((float)this.p.getvalue());
+
+                    GUI.DrawTexture(new Rect(this.r.xMax, this.r.yMin, activLength, TPEditorTools.psize.y), TPEditorTools.psty.onActive.background);
+                    GUI.DrawTexture(new Rect(this.r.xMax + activLength, this.r.yMin, totallength - activLength, TPEditorTools.psize.y), TPEditorTools.psty.active.background);
+
+                }
+            }
+
+        }
+
+        void drawActivationInInspector(DraggableColumn fromCol, DraggableColumn toCol)
+        {
+            //when is always at the left
+            float totallength = (toCol.Position.x - (fromCol.Position.x + TPEditorTools.psize.x));
+            float activLength = totallength * (float)this.p.getvalue();
+            GUI.DrawTexture(new Rect(fromCol.Position.x + TPEditorTools.psize.x, this.r.yMin, totallength - activLength, TPEditorTools.psize.y), TPEditorTools.psty.active.background);
+            GUI.DrawTexture(new Rect(fromCol.Position.x + TPEditorTools.psize.x + totallength - activLength, this.r.yMin, activLength, TPEditorTools.psize.y), TPEditorTools.psty.onActive.background);             
+        }
+
+
+
+
+        public void drawInInspector( DraggableColumn fromCol, DraggableColumn toCol)
+        {
+            if (this.p == null)
+            { //the gameObject was deleted
+                destroyMe = true;
+            }
+            else
+            {
+                string spval = p.getvalue().ToString("F2");
+                if (p.getvalue() > 0.99)
+                    spval = "1";
+                else
+                    spval = spval.Remove(0, 1);
+                this.label = spval;
+
+                this.c = fromCol;
+
+
+                this.r.x = fromCol.Position.x;
+                this.r.y = 0;
+                //GUI.Label (this.r,this.label,TPEditorTools.psty);
+               
+
+
+
+
+                string t = "Perception '" + this.p.name + "' \n" + helptext;
+
+                TPEditorTools.drawListItem(this.p);
+
+
+                /*
+                s.name = GUILayout.TextField(s.name);
+
+                if (GUILayout.Button("Edit", GUILayout.Width(40)))
+                {//! \todo find the look into icon
+                    Selection.activeTransform = s.transform;
+                }
+                if (GUILayout.Button("-", GUILayout.Width(20)))
+                {
+                    GameObject.DestroyImmediate(s.gameObject);
+                }
+                */
+
+                drawActivationInInspector(fromCol, toCol);
+                
+                if (left != null)
+                {
+                    this.left.r.x = this.r.xMin - this.left.r.width;
+                    this.left.r.y = this.r.y + this.r.height / 2 - this.left.r.height / 2;
+                    GUI.Label(this.left.r, " ", TPEditorTools.nsty);
+                }
+                if (right != null)
+                {
+                    this.right.r.x = this.r.xMax;
+                    this.right.r.y = this.r.y + this.r.height / 2 - this.right.r.height / 2;
+                    GUI.Label(this.right.r, " ", TPEditorTools.nsty);
+                }
+            }
+        }
+
+
+
+
+
+    }
+
+
+}

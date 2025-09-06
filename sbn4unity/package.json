@@ -1,0 +1,10 @@
+{
+  "name": "io.timepath.simple-behavior-networks",
+  "displayName": "Behaviour Networks",
+  "version": "0.2.0",
+  "unity": "2021.2",
+  "description": "Behaviour Networks in Unity ",
+  "type": "",
+  "dependencies": {
+  }
+}

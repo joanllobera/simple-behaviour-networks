@@ -1,0 +1,20 @@
+{
+    "name": "BehaviorAgentEditor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:740839ec00f160b4c9ee3089edb2929b",
+        "GUID:2ec6ada38c921d543bbd58fcb8b16d91",
+        "GUID:9fc6ad74e05eb2d4c8728809d0e81a3b"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

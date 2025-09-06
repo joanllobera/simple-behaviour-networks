@@ -1,0 +1,108 @@
+﻿using UnityEngine;
+using UnityEditor;
+using System.Collections;
+
+
+namespace timepath4unity{
+public class TPButton  {
+
+
+    
+        double time_button_left;
+        int select_step = 0;
+        bool showDeleteButton = false;
+
+        Rect r;
+
+    public bool Button(Component g, int HoverButtonHash, Rect position, GUIContent content, GUIStyle style){
+        this.r = position;
+        
+        bool destroyMe = false;
+        switch (HoverButton(HoverButtonHash, position, content, style))
+                {
+                    case EventType.mouseDown:
+                        select_step = 1;
+                    
+                        break;
+                    case EventType.mouseUp:
+                        if (select_step == 1 )
+                        {
+                            select_step = 0;
+
+                            Selection.activeGameObject = g.gameObject;
+                            EditorGUIUtility.PingObject(g.gameObject);
+
+                        }
+
+                        break;
+                    case EventType.mouseDrag:
+                       
+                        break;
+                    case EventType.mouseMove:
+                        showDeleteButton = true;
+                        time_button_left =  EditorApplication.timeSinceStartup;
+                        break;
+                }
+                if (showDeleteButton)
+                {
+
+                    if (GUI.Button(new Rect(this.r.x + this.r.width - (TPEditorTools.psize.x), this.r.y - TPEditorTools.psize.y, TPEditorTools.psize.x, this.r.height), new GUIContent("  -  "), TPEditorTools.Psty))
+                    {
+                        destroyMe = true;
+                        //GameObject.DestroyImmediate(g.gameObject);
+                    }
+                    if (EditorApplication.timeSinceStartup - time_button_left > 2.0)
+                        showDeleteButton = false;
+
+                 
+                }
+
+                return destroyMe;
+    }
+
+      public static EventType HoverButton(int HoverButtonHash, Rect position, GUIContent content, GUIStyle style)
+        {
+            int controlID = GUIUtility.GetControlID(HoverButtonHash, FocusType.Native);
+            switch (Event.current.GetTypeForControl(controlID))
+            {
+                case EventType.mouseDown:
+                    if (position.Contains(Event.current.mousePosition))
+                    {
+                        GUIUtility.hotControl = controlID;
+                        Event.current.Use();
+                        return EventType.mouseDown;
+                    }
+                    break;
+                case EventType.mouseUp:
+                    if (GUIUtility.hotControl != controlID)
+                        return EventType.ignore;
+                    GUIUtility.hotControl = 0;
+                    Event.current.Use();
+                    if (position.Contains(Event.current.mousePosition))
+                        return EventType.mouseUp;
+                    else
+                        return EventType.ignore;
+                case EventType.mouseDrag:
+                    if (GUIUtility.hotControl == controlID)
+                    {
+                        Event.current.Use();
+                        return EventType.mouseDrag;
+                    }
+                    else
+                        return EventType.ignore;
+                case EventType.repaint:
+                    style.Draw(position, content, controlID);
+                    if (position.Contains(Event.current.mousePosition))
+                        return EventType.mouseMove;
+                    else
+                        return EventType.repaint;
+            }
+            if (position.Contains(Event.current.mousePosition))
+                return EventType.mouseMove;
+            else
+                return EventType.ignore;
+        }
+    }
+
+
+}
