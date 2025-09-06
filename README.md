@@ -16,19 +16,22 @@ I used this kind of architecture in [my PhD](https://joanllobera.github.io/files
 
 Later, a grant of the [Hasler Foundation](https://haslerstiftung.ch/en/welcome-to-the-hasler-foundation/) while a postdoc at EPFL gave me the time and ressources needed to port it to Unity3D, a game engine commonly used for VR development. 
 
-## Code
+## Code organization
 
 - The folder **C++** contains an implementation of behaviour networks. It is based on the older work of Klaus Dorer. What I did was, first, remove the dependencies from the Microsoft Foundation classes. It compiles into a simple .dll library that can be called from external software. As per my last test (September 2025) it compiles well using Microsoft Visual Studio on Windows. In principle the code is not dependent on windows classes, so it could compile for other platforms but I have never taken the time to do it.
 
 - The folder **sbn4unity** contains a Unity package. It implement a wrapper of the C++ .dll with a visual interface to create and edit the behaviour networks.   To integrate it in your project add the following line in your project manifest: 
   
   ```json
-  	"io.timepath.sbn": "https://github.com/joanllobera/simple-behaviour-networks.git?path=sbn4unity#0.2.0",
-  
+      "io.timepath.sbn": "https://github.com/joanllobera/simple-behaviour-networks.git?path=sbn4unity#0.2.0",
   ```
-  
-  
-  
+
   Make sure you also import the Sample files, to be able to define your perceptions and actions in a way that is consistent for the world you are creating.
 
-- The folder **sbn4unity_compile** is a legacy folder containing older code, and files to compile the code in the package in .dll libraries. This was implemented before the Unity package system inspired on npm was introduced, and it is not needed anymore. Older projects, like the Tutorial, still use these files
+- The folder **sbn4unity_compile** is a legacy folder containing older code, and files to compile the code in the package in .dll libraries. This was implemented before the Unity package system inspired on npm was introduced, and it is not needed anymore. Older projects, like the tutorial described below, still use these files.
+
+
+
+## See also
+
+A Tutorial showing the use of sbn4unity to create an agent that can take decisions on top of the ADAPT animation system, can be found [here](https://github.com/joanllobera/simple-behaviour-networks-tutorial.git))
