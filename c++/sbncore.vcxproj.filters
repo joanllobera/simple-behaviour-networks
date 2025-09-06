@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="source\TAct.cpp" />
+    <ClCompile Include="source\TAction.cpp" />
+    <ClCompile Include="source\TActionResource.cpp" />
+    <ClCompile Include="source\TAgent.cpp" />
+    <ClCompile Include="source\TBehaviorNetwork.cpp" />
+    <ClCompile Include="source\TCallbackConverter.cpp" />
+    <ClCompile Include="source\TCompetence.cpp" />
+    <ClCompile Include="source\TConnection.cpp" />
+    <ClCompile Include="source\TDorer2Competence.cpp" />
+    <ClCompile Include="source\TDorer2Connection.cpp" />
+    <ClCompile Include="source\TDorer2Goal.cpp" />
+    <ClCompile Include="source\TDorer2GoalTrack.cpp" />
+    <ClCompile Include="source\TDorer2Network.cpp" />
+    <ClCompile Include="source\TEnergySpreader.cpp" />
+    <ClCompile Include="source\TGoal.cpp" />
+    <ClCompile Include="source\TLlogicCompetence.cpp" />
+    <ClCompile Include="source\TLlogicNetwork.cpp" />
+    <ClCompile Include="source\Tmind.cpp" />
+    <ClCompile Include="source\TNetworkParams.cpp" />
+    <ClCompile Include="source\TObject.cpp" />
+    <ClCompile Include="source\TParseString.cpp" />
+    <ClCompile Include="source\TPercept.cpp" />
+    <ClCompile Include="source\TProposition.cpp" />
+    <ClCompile Include="source\TResource.cpp" />
+    <ClCompile Include="source\TResourceFactory.cpp" />
+    <ClCompile Include="source\TResourceProposition.cpp" />
+    <ClCompile Include="source\TStory.cpp" />
+    <ClCompile Include="source\TWorldState.cpp" />
+    <ClCompile Include="source\Timepath_main.cpp">
+      <Filter>start_here</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\networkheader.h" />
+    <ClInclude Include="source\TAct.h" />
+    <ClInclude Include="source\TAction.h" />
+    <ClInclude Include="source\TActionResource.h" />
+    <ClInclude Include="source\TAgent.h" />
+    <ClInclude Include="source\TBehaviorNetwork.h" />
+    <ClInclude Include="source\TCallbackConverter.h" />
+    <ClInclude Include="source\TCompetence.h" />
+    <ClInclude Include="source\TConnection.h" />
+    <ClInclude Include="source\TDorer2Competence.h" />
+    <ClInclude Include="source\TDorer2Connection.h" />
+    <ClInclude Include="source\TDorer2Goal.h" />
+    <ClInclude Include="source\TDorer2GoalTrack.h" />
+    <ClInclude Include="source\TDorer2Network.h" />
+    <ClInclude Include="source\TEnergySpreader.h" />
+    <ClInclude Include="source\TGoal.h" />
+    <ClInclude Include="source\TLlogicCompetence.h" />
+    <ClInclude Include="source\TLlogicNetwork.h" />
+    <ClInclude Include="source\Tmind.h" />
+    <ClInclude Include="source\TNetworkParams.h" />
+    <ClInclude Include="source\TObject.h" />
+    <ClInclude Include="source\TParseString.h" />
+    <ClInclude Include="source\TPercept.h" />
+    <ClInclude Include="source\TProposition.h" />
+    <ClInclude Include="source\TResource.h" />
+    <ClInclude Include="source\TResourceFactory.h" />
+    <ClInclude Include="source\TResourceProposition.h" />
+    <ClInclude Include="source\TStory.h" />
+    <ClInclude Include="source\TWorldState.h" />
+    <ClInclude Include="source\Timepath_header.h">
+      <Filter>start_here</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Timepath_unityagent.h">
+      <Filter>start_here</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="start_here">
+      <UniqueIdentifier>{ca0c5767-0898-406d-a058-a85f936fcac5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

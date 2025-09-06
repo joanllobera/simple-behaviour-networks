@@ -1,0 +1,58 @@
+
+To program a new kind of thread, start with threadDesc, and then minor changes will be needed in threadManager and Thread.h
+
+
+al MAIN:
+
+
+ new ThreadManager();
+ for(int i = 0; i<MAX_THREADS; i++ ){
+  m_axbFinish[i] = false;
+  m_axpThread[i] = (threadDesc*)ThreadManager::pGet()->pCreate();
+  m_axpThread[i]->Pause(true);
+  m_axpThread[i]->ResumeThread();
+ }
+
+
+
+//to calculate:
+
+
+
+ int  k = featuresV.size();
+
+
+ int thresh = k/MAX_THREADS;
+ //prova threads
+ for(int i = 0; i < MAX_THREADS; i++)
+ {
+  m_axbFinish[i] = false;
+  m_axpThread[i]->setParamDESC(CThread::ThreadType::threadDescrip,i*thresh,(i+1)*thresh,m_pGauss_pyr,-1,featuresV,m_pHist[i]);
+  m_axpThread[i]->SetFinishBool(&m_axbFinish[i]);
+  m_axpThread[i]->Pause(false);
+  //m_axpThread[i]->ResumeThread();
+ }
+
+ bool _bFin = false;
+ while(!_bFin)
+ {
+  _bFin = true;
+  for(int i = 0; i < MAX_THREADS; i++)
+   _bFin &= m_axbFinish[i];
+
+  Sleep(5);
+ }
+
+
+ERRORS IN COMPILATION AND LINKAGE:
+
+
+ensure these options are selected:
+
+-Use MFC in a shared dll
+-not use precompiled headers. properties > c++> precompiled headers
+-remove from preprocessor the option "_USRDLL" (it conflics with _AFXDLL, which is used by the windows threads)
+
+
+
+

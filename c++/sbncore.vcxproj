@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\networkheader.h" />
+    <ClInclude Include="source\TAct.h" />
+    <ClInclude Include="source\TAction.h" />
+    <ClInclude Include="source\TActionResource.h" />
+    <ClInclude Include="source\TAgent.h" />
+    <ClInclude Include="source\TBehaviorNetwork.h" />
+    <ClInclude Include="source\TCallbackConverter.h" />
+    <ClInclude Include="source\TCompetence.h" />
+    <ClInclude Include="source\TConnection.h" />
+    <ClInclude Include="source\TDorer2Competence.h" />
+    <ClInclude Include="source\TDorer2Connection.h" />
+    <ClInclude Include="source\TDorer2Goal.h" />
+    <ClInclude Include="source\TDorer2GoalTrack.h" />
+    <ClInclude Include="source\TDorer2Network.h" />
+    <ClInclude Include="source\TEnergySpreader.h" />
+    <ClInclude Include="source\TGoal.h" />
+    <ClInclude Include="source\Timepath_header.h" />
+    <ClInclude Include="source\Timepath_unityagent.h" />
+    <ClInclude Include="source\TLlogicCompetence.h" />
+    <ClInclude Include="source\TLlogicNetwork.h" />
+    <ClInclude Include="source\Tmind.h" />
+    <ClInclude Include="source\TNetworkParams.h" />
+    <ClInclude Include="source\TObject.h" />
+    <ClInclude Include="source\TParseString.h" />
+    <ClInclude Include="source\TPercept.h" />
+    <ClInclude Include="source\TProposition.h" />
+    <ClInclude Include="source\TResource.h" />
+    <ClInclude Include="source\TResourceFactory.h" />
+    <ClInclude Include="source\TResourceProposition.h" />
+    <ClInclude Include="source\TStory.h" />
+    <ClInclude Include="source\TWorldState.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\TAct.cpp" />
+    <ClCompile Include="source\TAction.cpp" />
+    <ClCompile Include="source\TActionResource.cpp" />
+    <ClCompile Include="source\TAgent.cpp" />
+    <ClCompile Include="source\TBehaviorNetwork.cpp" />
+    <ClCompile Include="source\TCallbackConverter.cpp" />
+    <ClCompile Include="source\TCompetence.cpp" />
+    <ClCompile Include="source\TConnection.cpp" />
+    <ClCompile Include="source\TDorer2Competence.cpp" />
+    <ClCompile Include="source\TDorer2Connection.cpp" />
+    <ClCompile Include="source\TDorer2Goal.cpp" />
+    <ClCompile Include="source\TDorer2GoalTrack.cpp" />
+    <ClCompile Include="source\TDorer2Network.cpp" />
+    <ClCompile Include="source\TEnergySpreader.cpp" />
+    <ClCompile Include="source\TGoal.cpp" />
+    <ClCompile Include="source\Timepath_main.cpp" />
+    <ClCompile Include="source\TLlogicCompetence.cpp" />
+    <ClCompile Include="source\TLlogicNetwork.cpp" />
+    <ClCompile Include="source\Tmind.cpp" />
+    <ClCompile Include="source\TNetworkParams.cpp" />
+    <ClCompile Include="source\TObject.cpp" />
+    <ClCompile Include="source\TParseString.cpp" />
+    <ClCompile Include="source\TPercept.cpp" />
+    <ClCompile Include="source\TProposition.cpp" />
+    <ClCompile Include="source\TResource.cpp" />
+    <ClCompile Include="source\TResourceFactory.cpp" />
+    <ClCompile Include="source\TResourceProposition.cpp" />
+    <ClCompile Include="source\TStory.cpp" />
+    <ClCompile Include="source\TWorldState.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BA5E468A-1B89-4B9E-94CD-F85F252B2E59}</ProjectGuid>
+    <RootNamespace>Project1</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>sbncore</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PostBuildEventUseInBuild />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PostBuildEventUseInBuild />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
